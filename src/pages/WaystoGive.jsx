@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Reveal from '../components/common/Reveal';
@@ -55,27 +55,98 @@ const CanadaHelpsWidget = ({ pageId, formType }) => {
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function WaystoGive() {
+  const location = useLocation();
   const { data, isLoading } = useMtscWaysToGiveLive();
   const [activeForm, setActiveForm] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEventUrl, setSelectedEventUrl] = useState('');
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const donationSectionRef = useRef(null);
+  const hasAutoOpenedRef = useRef(false);
 
   // Dynamic Media URLs from CMS (Zero hardcoded image fallbacks)
   const heroBgImageUrl = getMediaUrl(data?.hero_bg_image, null);
   const ctaBgImageUrl = getMediaUrl(data?.cta_bg_image, null);
 
   // Resolved Events List from CMS (Zero hardcoded text arrays)
-  const activeEvents = (Array.isArray(data?.events_list) && data.events_list.length > 0)
-    ? data.events_list.map(e => ({ name: e.event_name || "", url: e.event_url || "" }))
-    : [];
+  const activeEvents = useMemo(() => {
+    return (Array.isArray(data?.events_list) && data.events_list.length > 0)
+      ? data.events_list.map(e => ({ name: e.event_name || "", url: e.event_url || "" }))
+      : [];
+  }, [data?.events_list]);
 
   useEffect(() => {
     if (activeEvents.length > 0 && !selectedEventUrl) {
+      const params = new URLSearchParams(location.search);
+      const isTicketsQuery = params.get('tickets') === 'true' || params.get('modal') === 'tickets';
+      if (isTicketsQuery) {
+        const takeout = activeEvents.find(e => {
+          const normName = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normUrl = (e.url || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return normName.includes('takeout') || normUrl.includes('takeout');
+        });
+        if (takeout) {
+          setSelectedEventUrl(takeout.url);
+          return;
+        }
+      }
       setSelectedEventUrl(activeEvents[0].url);
     }
-  }, [activeEvents, selectedEventUrl]);
+  }, [activeEvents, selectedEventUrl, location.search]);
+
+  // Auto-open Event Tickets modal when navigating with ?tickets=true or ?modal=tickets (only once)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpenTickets =
+      params.get('tickets') === 'true' ||
+      params.get('modal') === 'tickets' ||
+      location.hash === '#purchase-tickets' ||
+      location.hash === '#tickets-modal';
+
+    if (shouldOpenTickets && !hasAutoOpenedRef.current) {
+      hasAutoOpenedRef.current = true;
+      setIsEventModalOpen(true);
+
+      const eventParam = params.get('event');
+      if (activeEvents.length > 0) {
+        if (eventParam) {
+          const normParam = eventParam.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const matched = activeEvents.find(e => {
+            const normName = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const normUrl = (e.url || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            return normName.includes(normParam) || normUrl.includes(normParam);
+          });
+          if (matched) {
+            setSelectedEventUrl(matched.url);
+            return;
+          }
+        }
+
+        // Prioritize Take-Out Luncheons
+        const takeout = activeEvents.find(e => {
+          const normName = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normUrl = (e.url || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return normName.includes('takeout') || normUrl.includes('takeout');
+        });
+        if (takeout) {
+          setSelectedEventUrl(takeout.url);
+        }
+      }
+    }
+  }, [location.search, location.hash, activeEvents]);
+
+  const handleCloseEventModal = () => {
+    setIsEventModalOpen(false);
+    hasAutoOpenedRef.current = true;
+    const params = new URLSearchParams(location.search);
+    if (params.has('tickets') || params.has('modal') || params.has('event')) {
+      params.delete('tickets');
+      params.delete('modal');
+      params.delete('event');
+      const newSearch = params.toString() ? `?${params.toString()}` : '';
+      window.history.replaceState(null, '', `${location.pathname}${newSearch}${location.hash}`);
+    }
+  };
 
   const handleScrollToDonate = () => {
     setActiveForm(null);
@@ -197,7 +268,7 @@ export default function WaystoGive() {
 
       <Modal
         isOpen={isEventModalOpen}
-        onClose={() => setIsEventModalOpen(false)}
+        onClose={handleCloseEventModal}
         title="Purchase Event Tickets"
       >
         <div className="w-full h-[500px] overflow-hidden rounded-xl">
