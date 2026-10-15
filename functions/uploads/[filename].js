@@ -1,5 +1,12 @@
 export async function onRequestGet(context) {
-  const { filename } = context.params;
+  let { filename } = context.params;
+
+  // Decode URL-encoded filenames (e.g. %20 -> space)
+  try {
+    filename = decodeURIComponent(filename);
+  } catch {
+    // Already decoded or invalid encoding — use as-is
+  }
 
   // Prevent path traversal
   if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
@@ -14,8 +21,6 @@ export async function onRequestGet(context) {
   const headers = new Headers();
   headers.set('Content-Type', obj.httpMetadata?.contentType || 'application/octet-stream');
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-
-  // Allow cross-origin image/audio loading
   headers.set('Access-Control-Allow-Origin', '*');
 
   return new Response(obj.body, { headers });
