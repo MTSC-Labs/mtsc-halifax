@@ -8,26 +8,34 @@ import Footer from '../../components/layout/Footer';
 
 const EventDetail = () => {
   const { url } = useParams();
-  const { fetchSingleEvent } = useEvents();
+  const { fetchSingleEvent, loading: contextLoading } = useEvents();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Re-run when url changes OR when context finishes loading
+    const fetchEvent = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchSingleEvent(url);
+        if (data) {
+          setEvent(data);
+        } else if (!contextLoading) {
+          // Only show error if context is done loading and event still not found
+          setError('Event not found');
+        }
+      } catch (err) {
+        setError('Event not found');
+      } finally {
+        if (!contextLoading) {
+          setLoading(false);
+        }
+      }
+    };
     fetchEvent();
-  }, [url]);
-
-  const fetchEvent = async () => {
-    try {
-      
-      const data = await fetchSingleEvent(url);
-      setEvent(data);
-    } catch (error) {
-      setError('Event not found');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [url, contextLoading]);
 
   const formatDate = (date) => {
     if (!date) return null;
