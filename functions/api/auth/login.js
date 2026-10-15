@@ -1,9 +1,17 @@
 import { SignJWT } from 'jose';
-import bcrypt from 'bcryptjs';
+import { verifyPassword } from '../_crypto.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const { email, password } = await request.json();
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ message: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { email, password } = body;
 
   if (!email || !password) {
     return Response.json({ message: 'Email and password are required' }, { status: 400 });
@@ -16,8 +24,8 @@ export async function onRequestPost(context) {
     return Response.json({ message: 'Invalid credentials' }, { status: 401 });
   }
 
-  // Verify password against stored bcrypt hash
-  const valid = await bcrypt.compare(password, admin.password_hash);
+  // Verify password against stored PBKDF2 hash
+  const valid = await verifyPassword(password, admin.password_hash);
   if (!valid) {
     return Response.json({ message: 'Invalid credentials' }, { status: 401 });
   }
