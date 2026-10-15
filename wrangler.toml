@@ -12,5 +12,3 @@ database_id = "a67ec718-2089-4894-84f4-bc98b42cdc14"
 binding = "R2"
 bucket_name = "mtsc-halifax-uploads"
 
-[vars]
-FRONTEND_URL = "https://missiontoseafarershalifax.ca"
