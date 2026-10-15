@@ -6,6 +6,8 @@ import { FaTicketAlt } from 'react-icons/fa';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import Reveal from '../../components/common/Reveal';
+import { resolveUploadUrl } from '../../services/uploadService';
+import { formatDate, parseEventDate } from '../../utils/dateUtils';
 
 // Import the background image
 import eventsBg from '../../assets/WhatsApp Image 2026-05-09 at 12.50.10 AM.jpeg';
@@ -14,15 +16,6 @@ const EventList = () => {
   const { allEvents, featuredEvents, loading: eventsLoading } = useEvents();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [sliderImgErrors, setSliderImgErrors] = useState({});
-
-  const formatDate = (date) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   // 1. FILTER FOR TOP 3 LATEST FEATURED EVENTS (Ongoing & Upcoming)
   const sliderEvents = useMemo(() => {
@@ -36,8 +29,8 @@ const EventList = () => {
 
     // Filter for ongoing and upcoming events
     const upcoming = sourceEvents
-      .filter((event) => event.eventDate && new Date(event.eventDate) >= today)
-      .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+      .filter((event) => event.eventDate && parseEventDate(event.eventDate) >= today)
+      .sort((a, b) => (parseEventDate(a.eventDate) || 0) - (parseEventDate(b.eventDate) || 0));
 
     // If we have upcoming events, take the top 3
     if (upcoming.length > 0) {
@@ -46,7 +39,7 @@ const EventList = () => {
 
     // Fallback: If no future events exist, just grab the 3 latest featured events 
     return [...sourceEvents]
-      .sort((a, b) => new Date(b.eventDate || 0) - new Date(a.eventDate || 0))
+      .sort((a, b) => (parseEventDate(b.eventDate) || 0) - (parseEventDate(a.eventDate) || 0))
       .slice(0, 3);
   }, [allEvents, featuredEvents]);
 
@@ -88,7 +81,7 @@ const EventList = () => {
     
     // Improved regex to handle optional quotes and spacing
     const match = searchContent.match(/<img[^>]+src=["']?([^"'\s>]+)["']?/i);
-    if (match) return match[1];
+    if (match) return resolveUploadUrl(match[1]);
     
     // Deep search through JSON content
     try {
@@ -96,7 +89,7 @@ const EventList = () => {
       const findImg = (nodes) => {
         if (!nodes || !Array.isArray(nodes)) return null;
         for (const node of nodes) {
-          if (node.type === 'image' && node.attrs?.src) return node.attrs.src;
+          if (node.type === 'image' && node.attrs?.src) return resolveUploadUrl(node.attrs.src);
           if (node.content) {
             const childImg = findImg(node.content);
             if (childImg) return childImg;
@@ -191,7 +184,7 @@ const EventList = () => {
                         const imageUrl = getFirstImage(event.content);
                         const hasImgError = sliderImgErrors[event.id];
                         const showImage = imageUrl && !hasImgError;
-                        const isUpcoming = new Date(event.eventDate) >= new Date(new Date().setHours(0,0,0,0));
+                        const isUpcoming = parseEventDate(event.eventDate) >= new Date(new Date().setHours(0,0,0,0));
                         
                         return (
                           <div 
@@ -288,6 +281,33 @@ const EventList = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </Reveal>
+          </section>
+
+          {/* =========================================
+              UPCOMING LUNCHEON SECTION
+              ========================================= */}
+          <section className="mb-16">
+            <Reveal>
+              <div className="mb-6">
+                <h2 className="text-3xl font-bold text-navy flex items-center gap-3">
+                  <span className="w-2 h-8 bg-coral rounded-full"></span>
+                  Upcoming Luncheon
+                </h2>
+                <p className="text-text-mid font-semibold mt-2 ml-5 flex items-center gap-2">
+                  <FiCalendar className="text-coral" /> 29 October 2026, Thursday
+                </p>
+              </div>
+
+              <div className="rounded-2xl border-2 border-[#005b96] bg-gradient-to-br from-[#f0f7fc] to-[#ffffff] p-6 md:p-8 shadow-[0_6px_20px_rgba(0,91,150,0.12)] text-center">
+                <div className="flex justify-center items-center text-center mx-auto w-full">
+                  <img
+                    src="https://mediumpurple-giraffe-353804.hostingersite.com/uploads/1a082809-27f9-46ef-96c2-efb6bfde2f9e.webp"
+                    alt="Fall Luncheon October 29th 2026 Poster"
+                    className="block mx-auto max-w-full max-h-[850px] w-auto h-auto rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.12)] border border-[#d0e2ec] hover:scale-[1.01] hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)] transition-all duration-300"
+                  />
+                </div>
               </div>
             </Reveal>
           </section>

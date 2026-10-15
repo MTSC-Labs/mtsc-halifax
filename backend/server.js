@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import eventRoutes from './routes/events.js';
 import uploadRoutes from './routes/upload.js';
 import prayerRoutes from './routes/prayers.js'; 
+import contactRoutes from './routes/contact.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -18,6 +19,9 @@ const PORT = process.env.PORT || 5000;
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow images to load from frontend
+  crossOriginEmbedderPolicy: false,
+  frameguard: false, // allow PDFs and media to be embedded in iframes on frontend domains
+  contentSecurityPolicy: false,
 }));
 
 // Allow multiple frontend URLs (local + production)
@@ -43,14 +47,20 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve uploaded files as static assets
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve uploaded files as static assets with embed-friendly headers
+app.use('/uploads', (req, res, next) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/prayers', prayerRoutes); 
+app.use('/api/contact', contactRoutes); 
 // Error handling middleware
 app.use(errorHandler);
 

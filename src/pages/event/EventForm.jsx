@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { eventService } from '../../services/eventService';
 import { authService } from '../../services/authService';
+import { prepareContentForEditor, prepareContentForSave } from '../../services/uploadService';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import TiptapEditor from '../../components/event/TiptapEditor';
 import TiptapRender from '../../components/event/TiptapRender';
 import toast, { Toaster } from 'react-hot-toast';
+import { formatDate, parseEventDate, formatEventDateForSave } from '../../utils/dateUtils';
 
 // Handle ESM/CommonJS interop
 const DatePicker = ReactDatePicker.default || ReactDatePicker;
@@ -45,8 +47,8 @@ const EventForm = () => {
       setFormData({
         title: data.title,
         url: data.url,
-        content: data.content || '',
-        eventDate: data.eventDate ? new Date(data.eventDate) : null,
+        content: prepareContentForEditor(data.content || ''),
+        eventDate: data.eventDate ? parseEventDate(data.eventDate) : null,
         isFeatured: data.isFeatured,
       });
       setContentLoaded(true);
@@ -65,7 +67,8 @@ const EventForm = () => {
     try {
       const eventData = {
         ...formData,
-        eventDate: formData.eventDate ? formData.eventDate.toISOString() : null,
+        content: prepareContentForSave(formData.content),
+        eventDate: formData.eventDate ? formatEventDateForSave(formData.eventDate) : null,
       };
 
       if (isEdit) {
@@ -98,14 +101,9 @@ const EventForm = () => {
               >
                 ← Back
               </Link>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-3xl font-bold text-navy truncate">
-                  {isEdit ? 'Edit Event' : 'Create New Event'}
-                </h1>
-                <p className="text-text-mid text-xs sm:text-sm mt-0.5 hidden sm:block">
-                  {isEdit ? 'Update event details and content' : 'Fill in the details to create a new event'}
-                </p>
-              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-navy truncate">
+                {isEdit ? 'Edit Event' : 'Create Event'}
+              </h1>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
@@ -136,11 +134,7 @@ const EventForm = () => {
             {formData.eventDate && (
               <div className="text-text-mid mb-8 text-lg">
                 <time>
-                  {new Date(formData.eventDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {formatDate(formData.eventDate)}
                 </time>
               </div>
             )}
