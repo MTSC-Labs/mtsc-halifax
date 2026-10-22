@@ -91,9 +91,9 @@ const Contact = () => {
         body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
 
-      if (response.ok && result.success) {
+      if (response.ok && result?.success) {
         setIsSuccess(true);
         if (formRef.current) {
           formRef.current.reset();
@@ -104,7 +104,7 @@ const Contact = () => {
         }
         setTimeout(() => setIsSuccess(false), 5000);
       } else {
-        setErrorMessage(result.message || 'Form submission failed. Please try again.');
+        setErrorMessage(result?.message || 'Form submission failed. Please try again.');
         if (recaptchaRef.current) {
           recaptchaRef.current.reset();
         }
