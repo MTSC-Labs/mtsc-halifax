@@ -303,7 +303,7 @@ const EventList = () => {
               <div className="rounded-2xl border-2 border-[#005b96] bg-gradient-to-br from-[#f0f7fc] to-[#ffffff] p-6 md:p-8 shadow-[0_6px_20px_rgba(0,91,150,0.12)] text-center">
                 <div className="flex justify-center items-center text-center mx-auto w-full">
                   <img
-                    src="https://mediumpurple-giraffe-353804.hostingersite.com/uploads/1a082809-27f9-46ef-96c2-efb6bfde2f9e.webp"
+                    src="/uploads/1a082809-27f9-46ef-96c2-efb6bfde2f9e.webp"
                     alt="Fall Luncheon October 29th 2026 Poster"
                     className="block mx-auto max-w-full max-h-[850px] w-auto h-auto rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.12)] border border-[#d0e2ec] hover:scale-[1.01] hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)] transition-all duration-300"
                   />

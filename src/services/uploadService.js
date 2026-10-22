@@ -1,41 +1,72 @@
 import api from '../utils/api';
 
-// Backend base URL (without /api) — used to resolve relative upload paths
-// Change this when the backend domain changes
-const BACKEND_URL = 'https://mediumpurple-giraffe-353804.hostingersite.com';
-
 /**
- * Resolves a relative upload path (e.g. /uploads/file.webp) to an absolute URL.
- * If the path is already absolute (starts with http), it's returned as-is.
+ * Resolves an upload path or legacy Hostinger URL to a clean relative path (e.g. /uploads/file.webp).
+ * This ensures all media is served directly from the Cloudflare R2 bucket.
  */
 export const resolveUploadUrl = (path) => {
-  if (!path) return path;
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  return `${BACKEND_URL}${path}`;
+  if (!path || typeof path !== 'string') return path || '';
+
+  // Strip legacy Hostinger domain
+  let clean = path.replace(/^https?:\/\/mediumpurple-giraffe-353804\.hostingersite\.com/i, '');
+
+  // Strip current domain if absolute
+  clean = clean.replace(/^https?:\/\/(?:www\.)?missiontoseafarershalifax\.ca/i, '');
+
+  // If path is an external URL (e.g. CMS, Unsplash, external media), leave as-is
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean;
+  }
+
+  // Normalize /api/uploads/ to /uploads/
+  if (clean.startsWith('/api/uploads/')) {
+    clean = clean.replace('/api/uploads/', '/uploads/');
+  }
+
+  // Ensure leading slash for relative uploads
+  if (clean.startsWith('uploads/')) {
+    clean = `/${clean}`;
+  }
+
+  return clean;
 };
 
 /**
- * Prepares HTML content from the DB for the Tiptap editor by converting relative /uploads/ paths to absolute URLs.
- * This prevents images from appearing broken while the admin is editing.
+ * Prepares HTML content from the DB for the Tiptap editor.
+ * Cleans any legacy Hostinger domains or absolute URLs, keeping clean relative /uploads/ paths.
  */
 export const prepareContentForEditor = (htmlContent) => {
-  if (!htmlContent) return htmlContent;
-  // Match normal quotes and HTML-escaped quotes to ensure we catch all image URLs
-  return htmlContent.replace(/src=(["']|&quot;)\/?(uploads\/[^"'&]+)\1/g, `src=$1${BACKEND_URL}/$2$1`);
+  if (!htmlContent || typeof htmlContent !== 'string') return htmlContent;
+
+  return htmlContent
+    // Replace Hostinger URLs in src or href
+    .replace(/(src|href)=(["']|&quot;)https?:\/\/mediumpurple-giraffe-353804\.hostingersite\.com\/?(?:api\/)?(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Replace production domain
+    .replace(/(src|href)=(["']|&quot;)https?:\/\/(?:www\.)?missiontoseafarershalifax\.ca\/?(?:api\/)?(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Normalize /api/uploads/ to /uploads/
+    .replace(/(src|href)=(["']|&quot;)\/api\/(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Ensure leading slash on uploads/
+    .replace(/(src|href)=(["']|&quot;)(?!https?:\/\/|\/)(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2');
 };
 
 /**
- * Prepares HTML content from the editor for the DB by stripping the backend URL, leaving only relative paths.
- * This ensures the DB stays decoupled from the domain.
+ * Prepares HTML content from the editor before saving to the DB.
+ * Strips any absolute domain prefixes to ensure DB only stores relative paths (e.g. /uploads/image.webp).
  */
 export const prepareContentForSave = (htmlContent) => {
-  if (!htmlContent) return htmlContent;
-  
-  // Escape BACKEND_URL for use in RegExp
-  const safeBackendUrl = BACKEND_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  
-  // Replace the specific BACKEND_URL prefix with just the relative path
-  return htmlContent.replace(new RegExp(`src=(["']|&quot;)${safeBackendUrl}/?(uploads/[^"'&]+)\\1`, 'g'), 'src=$1/$2$1');
+  if (!htmlContent || typeof htmlContent !== 'string') return htmlContent;
+
+  return htmlContent
+    // Strip Hostinger domain
+    .replace(/(src|href)=(["']|&quot;)https?:\/\/mediumpurple-giraffe-353804\.hostingersite\.com\/?(?:api\/)?(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Strip production domain
+    .replace(/(src|href)=(["']|&quot;)https?:\/\/(?:www\.)?missiontoseafarershalifax\.ca\/?(?:api\/)?(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Strip localhost
+    .replace(/(src|href)=(["']|&quot;)https?:\/\/localhost(?::\d+)?\/?(?:api\/)?(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Normalize /api/uploads/ to /uploads/
+    .replace(/(src|href)=(["']|&quot;)\/api\/(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2')
+    // Ensure leading slash on uploads/
+    .replace(/(src|href)=(["']|&quot;)(?!https?:\/\/|\/)(uploads\/[^"'&]+)\2/gi, '$1=$2/$3$2');
 };
 
 export const uploadService = {
@@ -46,10 +77,13 @@ export const uploadService = {
     // Do NOT set Content-Type manually - axios sets it with the correct boundary
     const response = await api.post('/upload', formData);
 
-    // Resolve the relative path to an absolute URL for immediate use
+    // Return the clean relative path (e.g. /uploads/filename.webp)
+    const rawUrl = response.data.url || `/uploads/${response.data.filename}`;
+    const cleanUrl = resolveUploadUrl(rawUrl);
+
     return {
       ...response.data,
-      url: resolveUploadUrl(response.data.url),
+      url: cleanUrl,
     };
   },
 
