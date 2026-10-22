@@ -81,7 +81,7 @@ const Contact = () => {
         recaptchaToken: recaptchaToken
       };
 
-      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const rawApiUrl = import.meta.env.VITE_API_URL || '/api';
 
       const response = await fetch(`${rawApiUrl}/contact/submit`, {
         method: 'POST',
