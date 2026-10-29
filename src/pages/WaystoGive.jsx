@@ -78,7 +78,22 @@ export default function WaystoGive() {
   useEffect(() => {
     if (activeEvents.length > 0 && !selectedEventUrl) {
       const params = new URLSearchParams(location.search);
+      const eventParam = params.get('event');
       const isTicketsQuery = params.get('tickets') === 'true' || params.get('modal') === 'tickets';
+
+      if (eventParam) {
+        const normParam = eventParam.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const matched = activeEvents.find(e => {
+          const normName = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normUrl = (e.url || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return normName.includes(normParam) || normUrl.includes(normParam);
+        });
+        if (matched) {
+          setSelectedEventUrl(matched.url);
+          return;
+        }
+      }
+
       if (isTicketsQuery) {
         const takeout = activeEvents.find(e => {
           const normName = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
