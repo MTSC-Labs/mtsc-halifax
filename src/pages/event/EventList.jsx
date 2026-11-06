@@ -304,7 +304,7 @@ const EventList = () => {
               <div className="rounded-2xl border-2 border-[#005b96] bg-gradient-to-br from-[#f0f7fc] to-[#ffffff] p-6 md:p-8 shadow-[0_6px_20px_rgba(0,91,150,0.12)] text-center">
                 <div className="flex justify-center items-center text-center mx-auto w-full">
                   <img
-                    src="/uploads/4142d90b-e07b-41b1-9535-497bc83a33bc.png"
+                    src="/uploads/dc49157f-0eff-45b9-a650-aa5a8927c6eb.jpg"
                     alt="Annual Christmas Luncheon December 9th 2026 Poster"
                     className="block mx-auto max-w-full max-h-[850px] w-auto h-auto rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.12)] border border-[#d0e2ec] hover:scale-[1.01] hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)] transition-all duration-300"
                   />
