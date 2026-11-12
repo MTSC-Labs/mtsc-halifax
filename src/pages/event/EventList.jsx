@@ -313,6 +313,23 @@ const EventList = () => {
             </Reveal>
           </section>
 
+          <section className="mb-16">
+            <Reveal>
+              <div className="mb-6">
+                <h2 className="text-3xl font-bold text-navy flex items-center gap-3">
+                  <span className="w-2 h-8 bg-coral rounded-full"></span>
+                  Christmas Shoebox Campaign 2026
+                </h2>
+              </div>
+
+              <div className="rounded-2xl border-2 border-[#005b96] bg-gradient-to-br from-[#f0f7fc] to-[#ffffff] p-6 md:p-8 shadow-[0_6px_20px_rgba(0,91,150,0.12)] text-center">
+                <div className="flex justify-center items-center text-center mx-auto w-full">
+                  <iframe width="100%" style="width: 100%; aspect-ratio: 8.5 / 11; border: none;" src="https://www.missiontoseafarershalifax.ca/uploads/24690d2d-18bb-4340-9065-88195307161c.pdf#view=FitH&toolbar=0" ></iframe>
+                </div>
+              </div>
+            </Reveal>
+          </section>
+
           {/* =========================================
               FEATURED EVENTS SECTION
               ========================================= */}
