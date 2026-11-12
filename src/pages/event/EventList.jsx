@@ -324,7 +324,11 @@ const EventList = () => {
 
               <div className="rounded-2xl border-2 border-[#005b96] bg-gradient-to-br from-[#f0f7fc] to-[#ffffff] p-6 md:p-8 shadow-[0_6px_20px_rgba(0,91,150,0.12)] text-center">
                 <div className="flex justify-center items-center text-center mx-auto w-full">
-                  <iframe width="100%" style="width: 100%; aspect-ratio: 8.5 / 11; border: none;" src="https://www.missiontoseafarershalifax.ca/uploads/24690d2d-18bb-4340-9065-88195307161c.pdf#view=FitH&toolbar=0" ></iframe>
+                  <iframe
+                    width="100%"
+                    style={{ width: '100%', aspectRatio: '8.5 / 11', border: 'none' }}
+                    src="https://www.missiontoseafarershalifax.ca/uploads/24690d2d-18bb-4340-9065-88195307161c.pdf#view=FitH&toolbar=0"
+                  />
                 </div>
               </div>
             </Reveal>
